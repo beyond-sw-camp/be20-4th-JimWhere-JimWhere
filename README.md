@@ -331,6 +331,7 @@ spec:
 }
 
 ```
+<img width="1656" height="897" alt="짐웨어" src="https://github.com/user-attachments/assets/8a4f8547-9037-44a3-b0a9-c98a0e09f71f" />
 
   </details>
 
