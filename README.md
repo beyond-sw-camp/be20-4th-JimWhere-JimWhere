@@ -173,7 +173,7 @@ JimWhere는 예약, 결제, 사용자 관리, 관리자 기능을 명확히 분�
 
 - ### 기능 수행 Test 결과
  <details> <summary>Gif</summary>
- [Gif 바로가기] https://drive.google.com/drive/folders/1HEsphdBVxdS50hcehUlygpUoegGlsOEm
+ [Gif 바로가기]https://drive.google.com/drive/folders/1HEsphdBVxdS50hcehUlygpUoegGlsOEm](https://drive.google.com/drive/folders/1ichAnsrOxNLOUZGz7Smkfy1hiuhh7FpT?usp=drive_link)](https://drive.google.com/drive/folders/1ichAnsrOxNLOUZGz7Smkfy1hiuhh7FpT?usp=sharing)
    </details> 
  
   <details> <summary>회원</summary>
