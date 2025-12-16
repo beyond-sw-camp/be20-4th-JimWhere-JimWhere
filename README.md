@@ -219,8 +219,123 @@ JimWhere는 예약, 결제, 사용자 관리, 관리자 기능을 명확히 분�
   <img width="915" height="516" alt="image" src="https://github.com/user-attachments/assets/92b2aa74-ee10-42cb-b5d6-80a761f57908" />
 
 
-    </details> 
+- ### 백엔드 Pipeline
+
+<details>
+<summary> Jenkins Backend Pipeline 보기</summary>
+
+```groovy
+  pipeline {
+  agent {
+    kubernetes {
+      yaml """
+apiVersion: v1
+kind: Pod
+spec:
+  serviceAccountName: jenkins
+  containers:
+  - name: gradle
+    image: gradle:9.2.1-jdk21
+    command: ["cat"]
+    tty: true
+    volumeMounts:
+    - name: workspace-volume
+      mountPath: /home/jenkins/agent
+
+  - name: kaniko
+    image: gcr.io/kaniko-project/executor:debug
+    command: ["/busybox/sh", "-c", "sleep 3600"]
+    volumeMounts:
+    - name: docker-config
+      mountPath: /kaniko/.docker/config.json
+      subPath: .dockerconfigjson
+    - name: workspace-volume
+      mountPath: /home/jenkins/agent
+
+  - name: kubectl
+    image: alpine/k8s:1.29.4
+    command: ["cat"]
+    tty: true
+    volumeMounts:
+    - name: workspace-volume
+      mountPath: /home/jenkins/agent
+
+  volumes:
+  - name: docker-config
+    secret:
+      secretName: dockerhub-secret
+  - name: workspace-volume
+    emptyDir: {}
+"""
+    }
+  }
+
+  stages {
+
+    stage('Branch Guard') {
+      steps {
+        script {
+          def branch = env.GIT_BRANCH ?: env.BRANCH_NAME
+          if (branch && !branch.contains('develop')) {
+            echo "evelop 브랜치 푸시가 아니므로 빌드 중단: ${branch}"
+            currentBuild.result = 'NOT_BUILT'
+            error("Stop pipeline")
+          }
+        }
+      }
+    }
+
+    stage('Checkout') {
+      steps {
+        git branch: 'develop', url: 'https://github.com/JimWhere/JimWhere-api.git'
+      }
+    }
+
+    stage('Build Jar') {
+      steps {
+        container('gradle') {
+          dir('jimwhere-api') {
+            sh '''
+              chmod +x gradlew
+              ./gradlew clean bootJar --no-daemon
+            '''
+          }
+        }
+      }
+    }
+
+    stage('Docker Build & Push') {
+      steps {
+        container('kaniko') {
+          sh '''
+            /kaniko/executor \
+              --context=dir:///home/jenkins/agent/workspace/jimwhere-backend-ci-cd/jimwhere-api \
+              --dockerfile=Dockerfile \
+              --destination=docker.io/kimsangjaedocker/jimwhere-backend:dev
+          '''
+        }
+      }
+    }
+
+    stage('Rollout Restart (Backend)') {
+      steps {
+        container('kubectl') {
+          sh '''
+            kubectl rollout restart deployment jimwhere-backend -n jimwhere
+            kubectl rollout status deployment jimwhere-backend -n jimwhere
+          '''
+        }
+      }
+    }
+  }
+}
+
+```
+
+  </details>
+
 <br>
+
 
 ## 👨‍👩‍👧‍👦 6. 팀원 회고
 
